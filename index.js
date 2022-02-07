@@ -77,10 +77,8 @@ canvas.addEventListener("click", (e) => {
         let aMean = Math.round(mean(alphas)*100)/100;
         rect.innerHTML = 
         `#: ${rects.children.length},<br>
-         Means = (
-          ${rMean}, ${gMean}, ${bMean}, ${aMean}<br>
-         Standard Deviations = (
-         ${Math.round(stdev(reds)*100)/100}, 
+         Means = (${rMean}, ${gMean}, ${bMean}, ${aMean})<br>
+         Standard Deviations = (${Math.round(stdev(reds)*100)/100}, 
          ${Math.round(stdev(greens)*100)/100}, 
          ${Math.round(stdev(blues)*100)/100}, 
          ${Math.round(stdev(alphas)*100)/100})<br>`;
