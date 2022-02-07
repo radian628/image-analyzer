@@ -1,0 +1,13 @@
+body {
+  font-family: sans-serif;
+}
+
+#rects {
+  padding-left: 20px;
+  font-family: monospace;
+}
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+}

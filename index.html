@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>Image Analyzer</h1>
+    <p>Select rectangles in images and find the mean colors and their standard deviations!</p>
+    <p>Data are shown in the form (R, G, B, A).</p>
+    <div class="flex-container">
+      <canvas width="512" height="512" id="canvas"></canvas>
+      <div id="rects"></div>
+    </div>
+    <input type="file" id="image-submit">
+    <script src="index.js"></script>
+  </body>
+</html>
