@@ -50,14 +50,18 @@ canvas.addEventListener("click", (e) => {
     	clickPos1 = [e.offsetX, e.offsetY];
         clickMode = "second"
     } else {
+      let minX = Math.min(clickPos1[0], e.offsetX);
+      let maxX = Math.max(clickPos1[0], e.offsetX);
+      let minY = Math.min(clickPos1[1], e.offsetY);
+      let maxY = Math.max(clickPos1[1], e.offsetY);
     	clickMode = "first";
-        let imgData = ctx.getImageData(...clickPos1, e.offsetX, e.offsetY);
+        let imgData = ctx.getImageData(minX, minY, maxX, maxY);
         let reds = [];
         let greens = [];
         let blues = [];
         let alphas = [];
-        for (let y = 0; y < e.offsetY - clickPos1[1]; y++) {
-            for (let x = 0; x < e.offsetX - clickPos1[0]; x++) {
+        for (let y = 0; y < maxY - minY; y++) {
+            for (let x = 0; x < maxX - minX; x++) {
 				let px = getPixel(imgData, x, y);
                 reds.push(px[0]);
                 greens.push(px[1]);
@@ -67,20 +71,31 @@ canvas.addEventListener("click", (e) => {
         }
         //console.log(reds[0]);
         let rect = document.createElement("p");
+        let rMean = Math.round(mean(reds)*100)/100;
+        let gMean = Math.round(mean(greens)*100)/100;
+        let bMean = Math.round(mean(blues)*100)/100;
+        let aMean = Math.round(mean(alphas)*100)/100;
         rect.innerHTML = 
         `#: ${rects.children.length},<br>
          Means = (
-         ${Math.round(mean(reds)*100)/100}, 
-         ${Math.round(mean(greens)*100)/100}, 
-         ${Math.round(mean(blues)*100)/100}, 
-         ${Math.round(mean(alphas)*100)/100})<br>
+          ${rMean}, ${gMean}, ${bMean}, ${aMean}<br>
          Standard Deviations = (
          ${Math.round(stdev(reds)*100)/100}, 
          ${Math.round(stdev(greens)*100)/100}, 
          ${Math.round(stdev(blues)*100)/100}, 
          ${Math.round(stdev(alphas)*100)/100})<br>`;
          rects.appendChild(rect);
-         ctx.strokeRect(clickPos1[0], clickPos1[1], e.offsetX - clickPos1[0], e.offsetY - clickPos1[1]);
-         ctx.fillText(rects.children.length - 1, clickPos1[0] + 2, clickPos1[1] + 10);
+         ctx.font = "24px Arial";
+         ctx.lineWidth = 3;
+         ctx.strokeStyle = "white";
+         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+         ctx.lineWidth = 1;
+         ctx.strokeStyle = "black";
+         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+         ctx.lineWidth = 3;
+         ctx.strokeStyle = "white";
+         ctx.strokeText(rects.children.length - 1, minX + 12, minY + 30);
+         ctx.fillStyle = "black";
+         ctx.fillText(rects.children.length - 1, minX + 12, minY + 30);
     }
 });
