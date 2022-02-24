@@ -4,10 +4,17 @@
     <link type="text/css" rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Image Analyzer</h1>
+    <h1>Soil Analyzer</h1>
     <p>Select rectangles in images and find the mean colors and their standard deviations!</p>
     <p>Data are shown in the form (R, G, B, A).</p>
+    <p>Select the type of soil test to analyze using the drop down</p>
     <p>Click twice on the image to create a rectangle. Upload an image here:</p>
+    <select id="test-type">
+      <option value="K">Potassium</option>
+      <option value="P">Phosphorus</option>
+      <option value="N">Nitrogen</option>
+      <option value="pH">pH</option>
+    </select>
     <input type="file" id="image-submit">
     <div class="flex-container">
       <canvas width="512" height="512" id="canvas"></canvas>
