@@ -5,6 +5,8 @@ let imageSubmit = document.getElementById("image-submit");
 let rects = document.getElementById("rects");
 let testType = document.getElementById('test-type').value;
 
+let resetDataCollectionButton = document.getElementById("reset-data-collection");
+
 function getPixel(data,x,y) {
 	return [
     	data.data[4*(data.width * y + x)],
@@ -35,9 +37,7 @@ imageSubmit.addEventListener("change", (e) => {
         let img = new Image(); // Creates image object
         img.src = e.target.result; // Assigns converted image to image object
         img.onload = function(ev) {
-          canvas.width = img.width; // Assigns image's width to canvas
-          canvas.height = img.height; // Assigns image's height to canvas
-          ctx.drawImage(img,0,0); // Draws the image on canvas
+          ctx.drawImage(img,0,0, canvas.width, canvas.height); // Draws the image on canvas
         }
       }
     }
@@ -46,83 +46,148 @@ imageSubmit.addEventListener("change", (e) => {
 let clickPos1 = [];
 let clickMode = "first";
 
+let testResults = [];
+
+function getPNKTestLevels(chemicalName, chemicalSymbol) {
+  return [
+    ...new Array(5).fill(0).map((e,i) => `Concentration Level ${chemicalSymbol}${4 - i}`), `Actual ${chemicalName} (${chemicalSymbol}) Test`
+  ]
+} 
+
+let levels = {
+  P: getPNKTestLevels("Phosphorus", "P"),
+  N: getPNKTestLevels("Nitrogen", "N"),
+  K: getPNKTestLevels("Potassium", "K"),
+  pH: ["7.5 Alkaline", "7.0 Neutral", "6.5 Slight Acid", "6.0 Acid", "5.5 Acid", "5.0 Very Acid", "4.5 Very Acid"]
+}
+
+let numericalKeys = {
+  P: [4, 3, 2, 1, 0],
+  N: [4, 3, 2, 1, 0],
+  K: [4, 3, 2, 1, 0],
+  pH: [7.5, 7, 6.5, 6, 5.5, 5, 4.5]
+}
+
 canvas.addEventListener("click", (e) => {
 	if (clickMode == "first") {
     	clickPos1 = [e.offsetX, e.offsetY];
-        clickMode = "second"
+      clickMode = "second"
     } else {
-      let minX = Math.min(clickPos1[0], e.offsetX);
-      let maxX = Math.max(clickPos1[0], e.offsetX);
-      let minY = Math.min(clickPos1[1], e.offsetY);
-      let maxY = Math.max(clickPos1[1], e.offsetY);
-    	clickMode = "first";
-        let imgData = ctx.getImageData(minX, minY, maxX, maxY);
-        let reds = [];
-        let greens = [];
-        let blues = [];
-        let alphas = [];
-        for (let y = 0; y < maxY - minY; y++) {
-            for (let x = 0; x < maxX - minX; x++) {
-				let px = getPixel(imgData, x, y);
-                reds.push(px[0]);
-                greens.push(px[1]);
-                blues.push(px[2]);
-                alphas.push(px[3]);
-            }
+      let testType = document.getElementById('test-type').value;
+      clickMode = "first";
+      let testResult = calcRectangle(clickPos1[0], clickPos1[1], e.offsetX, e.offsetY);
+      drawRectangle(clickPos1[0], clickPos1[1], e.offsetX, e.offsetY);
+      testResults.push(testResult);
+      appendTestResult(testResult, levels[testType][testResults.length - 1]);
+      if (testResults.length > numericalKeys[testType].length) {
+        let testResultsAsObj = {};
+        for (let i = 0; i < 5; i++) {
+          testResultsAsObj[numericalKeys[testType][i]] = testResults[i];
         }
-        //console.log(reds[0]);
-        let rect = document.createElement("p");
-        let rMean = Math.round(mean(reds)*100)/100;
-        let gMean = Math.round(mean(greens)*100)/100;
-        let bMean = Math.round(mean(blues)*100)/100;
-        let aMean = Math.round(mean(alphas)*100)/100;
-        testType = document.getElementById('test-type').value;
-        //TODO: Change this so that it's based on user input
-        //TODO: Average color values----------------------------------------
-        if (testType == 'K') {
-            arr = {};
-        } else if (testType == 'P') {
-            arr = {4: '(15.18, 83.51, 154.41, 255.00)', 3: '(39.29, 90.90, 140.68, 255.00)', 2: '(84.88, 109.85, 136.40, 255.00)', 1: '(106.21, 121.59, 132.81, 255.00)', 0: '(143.00, 139.73, 132.53, 255.00)'};
-        } else if (testType == 'N') {
-            arr = {4: '(173.32, 54.59, 121.72, 255.00)', 3: '(167.44, 71.61, 117.06, 255.00)', 2: '(166.82, 96.97, 117.98, 255.00)', 1: '(168.28, 114.71, 119.63, 255.00)', 0: '(173.00, 139.68, 130.39, 255.00)'};
-        } else {
-            arr = {7.5: '(8.44, 73.38, 23.30, 255)', 7.0: '(18.13, 103.61, 27.89, 255)', 6.5: '(116.75, 115.20, 18.17, 255)', 6.0: '(172.50, 146, 9.61, 255)', 5.5: '(217.62, 147.21, 6.21, 255)', 5.0: '(211.68, 95.28, 6.92, 255)', 4.5: '(207.45, 65.98, 7.23, 255)'};
-        }
-        //------------------------------------------------------------------
-        rect.innerHTML = 
-        `#: ${rects.children.length},<br>
-         Means = (${rMean}, ${gMean}, ${bMean}, ${aMean})<br>
-         Standard Deviations = (${Math.round(stdev(reds)*100)/100}, 
-         ${Math.round(stdev(greens)*100)/100}, 
-         ${Math.round(stdev(blues)*100)/100}, 
-         ${Math.round(stdev(alphas)*100)/100})<br>
-         ${testType}: ${getVal(`(${rMean}, ${gMean}, ${bMean}, ${aMean})`, arr)}`;
-         rects.appendChild(rect);
-         ctx.font = "24px Arial";
-         ctx.lineWidth = 3;
-         ctx.strokeStyle = "white";
-         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-         ctx.lineWidth = 1;
-         ctx.strokeStyle = "black";
-         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-         ctx.lineWidth = 3;
-         ctx.strokeStyle = "white";
-         ctx.strokeText(rects.children.length - 1, minX + 12, minY + 30);
-         ctx.fillStyle = "black";
-         ctx.fillText(rects.children.length - 1, minX + 12, minY + 30);
+        let nutrientDecision = getVal(testResult, testResultsAsObj);
+        let conclusion = document.createElement("p");
+        conclusion.innerHTML = `<b>${nutrientDecision}</b>`;
+        rects.appendChild(conclusion);
+      }
     }
 });
+
+resetDataCollectionButton.addEventListener("click", e => {
+  testResults = [];
+  while (rects.children.length != 0) rects.removeChild(rects.lastElementChild);
+  imageSubmit.dispatchEvent(new Event("change"));
+});
+
+function appendTestResult(testResult, purpose) {
+  let rect = document.createElement("p");
+  rect.innerHTML = 
+  `#: ${rects.children.length}; ${purpose}<br>
+  Means = (${testResult[0]}, ${testResult[1]}, ${testResult[2]}, ${testResult[3]})<br>`;
+  rects.appendChild(rect);
+}
+
+function calcRectangle(x1, y1, x2, y2) {
+  let minX = Math.min(x1, x2);
+  let maxX = Math.max(x1, x2);
+  let minY = Math.min(y1, y2);
+  let maxY = Math.max(y1, y2);
+  clickMode = "first";
+  let imgData = ctx.getImageData(minX, minY, maxX, maxY);
+  let reds = [];
+  let greens = [];
+  let blues = [];
+  let alphas = [];
+  for (let y = 0; y < maxY - minY; y++) {
+      for (let x = 0; x < maxX - minX; x++) {
+          let px = getPixel(imgData, x, y);
+          reds.push(px[0]);
+          greens.push(px[1]);
+          blues.push(px[2]);
+          alphas.push(px[3]);
+      }
+  }
+  //console.log(reds[0]);
+  //let rect = document.createElement("p");
+  let rMean = Math.round(mean(reds)*100)/100;
+  let gMean = Math.round(mean(greens)*100)/100;
+  let bMean = Math.round(mean(blues)*100)/100;
+  let aMean = Math.round(mean(alphas)*100)/100;
+  return [rMean, gMean, bMean, aMean];
+
+  // testType = document.getElementById('test-type').value;
+  // //TODO: Change this so that it's based on user input
+  // //TODO: Average color values----------------------------------------
+  // if (testType == 'K') {
+  //     arr = {};
+  // } else if (testType == 'P') {
+  //     arr = {4: '(15.18, 83.51, 154.41, 255.00)', 3: '(39.29, 90.90, 140.68, 255.00)', 2: '(84.88, 109.85, 136.40, 255.00)', 1: '(106.21, 121.59, 132.81, 255.00)', 0: '(143.00, 139.73, 132.53, 255.00)'};
+  // } else if (testType == 'N') {
+  //     arr = {4: '(173.32, 54.59, 121.72, 255.00)', 3: '(167.44, 71.61, 117.06, 255.00)', 2: '(166.82, 96.97, 117.98, 255.00)', 1: '(168.28, 114.71, 119.63, 255.00)', 0: '(173.00, 139.68, 130.39, 255.00)'};
+  // } else {
+  //     arr = {7.5: '(8.44, 73.38, 23.30, 255)', 7.0: '(18.13, 103.61, 27.89, 255)', 6.5: '(116.75, 115.20, 18.17, 255)', 6.0: '(172.50, 146, 9.61, 255)', 5.5: '(217.62, 147.21, 6.21, 255)', 5.0: '(211.68, 95.28, 6.92, 255)', 4.5: '(207.45, 65.98, 7.23, 255)'};
+  // }
+  // //------------------------------------------------------------------
+  // rect.innerHTML = 
+  // `#: ${rects.children.length},<br>
+  // Means = (${rMean}, ${gMean}, ${bMean}, ${aMean})<br>
+  // Standard Deviations = (${Math.round(stdev(reds)*100)/100}, 
+  // ${Math.round(stdev(greens)*100)/100}, 
+  // ${Math.round(stdev(blues)*100)/100}, 
+  // ${Math.round(stdev(alphas)*100)/100})<br>
+  // ${testType}: ${getVal(`(${rMean}, ${gMean}, ${bMean}, ${aMean})`, arr)}`;
+  // rects.appendChild(rect);
+}
+
+
+function drawRectangle(x1, y1, x2, y2) {
+  let minX = Math.min(x1, x2);
+  let maxX = Math.max(x1, x2);
+  let minY = Math.min(y1, y2);
+  let maxY = Math.max(y1, y2);
+  ctx.font = "24px Arial";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "black";
+  ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "white";
+  ctx.strokeText(rects.children.length, minX + 12, minY + 30);
+  ctx.fillStyle = "black";
+  ctx.fillText(rects.children.length, minX + 12, minY + 30);
+}
 
 // Gets the nutrient value
 function getVal(color, obj) {
     var results = {};
-    var R = parseFloat((getR(color)));
-    var G = parseFloat((getG(color)));
-    var B = parseFloat((getB(color)));
+    var R = color[0];//parseFloat((getR(color)));
+    var G = color[1];//parseFloat((getG(color)));
+    var B = color[2];//parseFloat((getB(color)));
     for (const property in obj) {
-        var R2 = parseFloat((getR(obj[property])));
-        var G2 = parseFloat((getG(obj[property])));
-        var B2 = parseFloat((getB(obj[property])));
+        var R2 = obj[property][0]//parseFloat((getR(obj[property])));
+        var G2 = obj[property][1]//parseFloat((getG(obj[property])));
+        var B2 = obj[property][2]//parseFloat((getB(obj[property])));
         results[property] = deltaE([R, G, B], [R2, G2, B2]);
     }
     var val = 0;
@@ -135,7 +200,11 @@ function getVal(color, obj) {
     }
     //TODO: Nutrient requirements-------------------------------------------
     if (testType == 'K') {
-        
+      if (val < 3) {
+          return(`${val}. You should raise K by ${3-val}.`)
+      } else {
+          return(`${val}. Your soil has sufficient K.`);
+      }
     } else if (testType == 'P') {
         if (val < 3) {
             return(`${val}. You should raise P by ${3-val}.`)
@@ -216,9 +285,9 @@ function avg() {
     let B = 0;
     let A = 255;
     for(i = 0; i < test.length; i++) {
-        R+=parseFloat(getR(test[i]));
-        G+=parseFloat(getG(test[i]));
-        B+=parseFloat(getB(test[i]));
+        R+=test[i];//parseFloat(getR(test[i]));
+        G+=test[i];//parseFloat(getG(test[i]));
+        B+=test[i];//parseFloat(getB(test[i]));
     }
     R/=test.length;
     G/=test.length;
